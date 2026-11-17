@@ -2,6 +2,7 @@
   "manifest_version": 3,
   "name": "CoinGlass Toolkit",
   "version": "0.1.0",
+  "description": "Adds features to CoinGlass pages. Unofficial; not affiliated with CoinGlass.",
   "host_permissions": [
     "https://www.coinglass.com/*",
     "https://fapi.binance.com/*",
