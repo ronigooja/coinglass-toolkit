@@ -4,9 +4,13 @@
 
 Unit tests sit next to the code as `*.test.js` and run with the Node built-in runner: `node --test`. Tests use recorded public venue orderbook responses as fixtures.
 
+Run `npm run check:docs` to validate documentation paths. CI runs both checks in its test job.
+
 ## Package for Safari
 
 `xcrun safari-web-extension-converter extension/` generates the Xcode project from the WebExtension source. Build it on a GitHub-hosted macOS runner.
+
+CI also runs a Safari packaging job after the test job.
 
 ## Manual check in Safari
 

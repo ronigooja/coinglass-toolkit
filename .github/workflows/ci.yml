@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Test and check documentation
+        run: |
+          npm test > test.log 2>&1 || { tail -n 100 test.log; exit 1; }
+          npm run check:docs > docs.log 2>&1 || { tail -n 100 docs.log; exit 1; }
+
+  safari-package:
+    needs: test
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Convert and build Safari extension
+        run: |
+          xcrun safari-web-extension-converter extension/ --project-location build --no-open --no-prompt --macos-only --app-name coinglass-toolkit > build.log 2>&1 || { tail -n 100 build.log; exit 1; }
+          xcodebuild -project build/coinglass-toolkit/coinglass-toolkit.xcodeproj -scheme "coinglass-toolkit (macOS)" -configuration Debug CODE_SIGNING_ALLOWED=NO build >> build.log 2>&1 || { tail -n 100 build.log; exit 1; }
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: safari-build-log
+          path: build.log
+          retention-days: 3
