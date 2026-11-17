@@ -12,6 +12,15 @@ const NATIVE = {
   htx: /^(.+)-USDT$/,
 }
 
+// Notice for a books response with no usable book: a failed request is told apart from a coin the venue does not list.
+// `errors` is the background's per-venue failure list; returns null when there is nothing to report.
+export function emptyBooksNotice(request, result) {
+  if (result.books?.length) return null
+  const failed = [...new Set((result.errors ?? []).map((e) => e.venue))]
+  if (failed.length) return `订单簿请求失败：${failed.join('、')}`
+  return `${request.kind === 'single' ? request.venue : '各交易所'}无 ${request.coin} 的 USDT 永续订单簿`
+}
+
 // `interval` values the page sends for the period selector. Anything but '1' (1 day) is a longer window.
 const PERIOD = { 1: '1天', 5: '7天', 30: '30天', '90d': '90天', '180d': '180天', '365d': '1年' }
 

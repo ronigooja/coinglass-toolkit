@@ -1,5 +1,5 @@
 import { impactCurves } from '../../shared/impact.js'
-import { parseRequest } from './requests.js'
+import { parseRequest, emptyBooksNotice } from './requests.js'
 import { priceToX, xToPrice, costToY, splitCurve } from './mapping.js'
 
 const source = 'impact-cost-page-hook'
@@ -199,7 +199,8 @@ export function init(ctx) {
       const result = await ctx.requestBooks(request.coin, request.kind === 'single' ? request.venue : undefined)
       if (generation !== state.generation) return
       state.books = result.books || []
-      if (!state.books.length) state.notice = `${request.kind === 'single' ? request.venue : '各交易所'}无 ${request.coin} 的 USDT 永续订单簿`
+      if (result.errors?.length) console.warn('impact-cost: venue errors', result.errors)
+      state.notice = emptyBooksNotice(request, result)
       await draw(state, generation)
     } catch (error) {
       if (generation === state.generation) console.warn('impact-cost: orderbooks unavailable', error)

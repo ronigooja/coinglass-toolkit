@@ -48,6 +48,18 @@ test('period comes from the interval the page sends', () => {
   assert.equal(p('5/liqMap?symbol=Binance_BTCUSDT', 'weird').period, null)
 })
 
+test('empty books: a failed request is told apart from an unlisted coin', async () => {
+  const { emptyBooksNotice } = await import('./requests.js')
+  const single = { kind: 'single', venue: 'mexc', coin: 'JCT' }
+  const all = { kind: 'exchange', coin: 'JCT' }
+  assert.equal(emptyBooksNotice(single, { books: [{}], errors: [] }), null)
+  assert.equal(emptyBooksNotice(all, { books: [{}], errors: [{ venue: 'okx', error: 'x' }] }), null)
+  assert.equal(emptyBooksNotice(single, { books: [], errors: [] }), 'mexc无 JCT 的 USDT 永续订单簿')
+  assert.equal(emptyBooksNotice(all, { books: [], errors: [] }), '各交易所无 JCT 的 USDT 永续订单簿')
+  assert.equal(emptyBooksNotice(single, { books: [], errors: [{ venue: 'mexc', error: 'blocked' }] }), '订单簿请求失败：mexc')
+  assert.equal(emptyBooksNotice(all, { books: [], errors: [{ venue: 'a' }, { venue: 'b' }] }), '订单簿请求失败：a、b')
+})
+
 test('MEXC, KuCoin, BingX and HTX symbols resolve to the coin', () => {
   const r = (symbol) => parseRequest(`${base}5/liqMap?symbol=${symbol}`)
   assert.deepEqual(r('MEXC_JCT_USDT'), { kind: 'single', venue: 'mexc', coin: 'JCT', period: null })

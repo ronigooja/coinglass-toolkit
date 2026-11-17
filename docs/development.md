@@ -36,4 +36,7 @@ Non-ASCII text in injected code is garbled by osascript. Write Chinese strings a
 1. Create `extension/shared/venues/<venue>.js` implementing [the adapter contract](../extension/shared/venues/README.md).
 2. Put the endpoint URL, parameters, and contract-size conversion in the file header comment, taken from the venue's official documentation.
 3. Register it in `extension/shared/venues/index.js`.
-4. Add a test using a recorded response fixture.
+4. Add its API host to `host_permissions` in `extension/manifest.json`, and its `liqMap` symbol pattern to `NATIVE` in `extension/modules/impact-cost/requests.js`.
+5. Add a test using a recorded response fixture.
+
+Safari grants website access per host. After installing a build with a new host, allow it in Safari > Settings > Extensions, otherwise that venue's requests fail and the chart shows `订单簿请求失败：<venue>`.

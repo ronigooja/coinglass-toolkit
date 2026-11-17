@@ -34,7 +34,7 @@ Hovering the plot shows the cursor price, percentage distance from the order-boo
 
 Notices carry no title prefix; the chart shows only the message. The UI name is "订单簿累计深度". Why not "推价费用": cost reads as fees or slippage, while the value is the cumulative resting notional that must be consumed.
 
-When nothing can be drawn, the overlay shows a small one-line notice instead of staying blank: the selected exchange has no adapter, or no venue returned an order book for the coin. The notice is muted gray with no fill, and its centre sits at (2, 4.4) when the plot area is a 10 x 5 grid with the origin at the bottom-left.
+When nothing can be drawn, the overlay shows a small one-line notice instead of staying blank: the selected exchange has no adapter, no venue returned an order book for the coin, or the order book request failed (`订单簿请求失败：<venue>`, for example when Safari has not granted the venue's host). A failure is shown only when no book was drawn; on the aggregate chart a partial failure is logged to the console and the curves are still drawn. The notice is muted gray with no fill, and its centre sits at (2, 4.4) when the plot area is a 10 x 5 grid with the origin at the bottom-left.
 
 Period: the order book is always the live book, while the 7-day to 1-year liquidation maps accumulate over their window. For any period other than 1天 the curves are still drawn and the notice reads "当前订单簿，非<period>累计". The period is taken from the `interval` the page sends, see [coinglass-page.md](../../../docs/coinglass-page.md).
 
