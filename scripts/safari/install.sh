@@ -49,7 +49,9 @@ codesign --force --sign "$SIGN_IDENTITY" --timestamp=none --entitlements "$ENT" 
 cp -R "$OUT" /Applications/
 rm -rf "$WORK/safari/$APP/Build"
 
-open "/Applications/$APP.app"
+# Launching the container app is what registers the extension; -g -j keeps it in the background and hidden.
+# Registering with pluginkit -a alone did not work.
+open -g -j "/Applications/$APP.app"
 sleep 3
 open -a Safari
 echo "installed /Applications/$APP.app ($(pluginkit -mAvvv -i "$BUNDLE_ID.Extension" 2>&1 | grep -c Path) registered)"
