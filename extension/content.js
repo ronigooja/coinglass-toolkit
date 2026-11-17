@@ -3,16 +3,16 @@
   const { modules } = await import(api.runtime.getURL('modules/index.js'))
   const { matchesUrl } = await import(api.runtime.getURL('shared/match.js'))
   const ctx = {
-    requestBooks: (coin) => globalThis.browser
-      ? api.runtime.sendMessage({ type: 'books', coin })
-      : new Promise((resolve, reject) => {
-      api.runtime.sendMessage({ type: 'books', coin }, (response) => {
-        const error = api.runtime.lastError
-        if (error) reject(new Error(error.message))
-        else resolve(response)
-      })
-    }),
-    onChartRefresh: null
+    requestBooks: (coin) =>
+      globalThis.browser
+        ? api.runtime.sendMessage({ type: 'books', coin })
+        : new Promise((resolve, reject) => {
+            api.runtime.sendMessage({ type: 'books', coin }, (response) => {
+              const error = api.runtime.lastError
+              if (error) reject(new Error(error.message))
+              else resolve(response)
+            })
+          }),
   }
 
   for (const path of modules) {

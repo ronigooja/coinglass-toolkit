@@ -22,7 +22,15 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["modules/*.js", "shared/*.js"],
+      "resources": [
+        "modules/index.js",
+        "modules/impact-cost/index.js",
+        "modules/impact-cost/requests.js",
+        "modules/impact-cost/mapping.js",
+        "modules/impact-cost/page-hook.js",
+        "shared/match.js",
+        "shared/impact.js"
+      ],
       "matches": ["https://www.coinglass.com/*"]
     }
   ]

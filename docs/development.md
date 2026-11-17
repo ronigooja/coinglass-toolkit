@@ -21,7 +21,8 @@ Page behavior cannot be tested offline. Enable Safari's Develop menu, allow unsi
 1. Create `extension/modules/<name>/` with `index.js` and `README.md` (spec).
 2. Export the module contract defined in [architecture.md](architecture.md).
 3. Register it in `extension/modules/index.js`.
-4. Add a row to the document map in [README.md](../README.md).
+4. List every file the module loads in `web_accessible_resources` of `extension/manifest.json`. Why: the content script imports modules by extension URL.
+5. Add a row to the document map in [README.md](../README.md).
 
 ## Add a venue
 
