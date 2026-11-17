@@ -6,6 +6,11 @@ import { gate } from './gate.js'
 
 export const venues = [binance, okx, bybit, bitget, gate]
 
+/** Select venues by name; no name selects all. An unknown name selects none. */
+export function selectVenues(name, list = venues) {
+  return name ? list.filter((v) => v.name === name) : list
+}
+
 /**
  * Fetch books from all venues in parallel. A venue that fails or lacks the coin is skipped.
  * @param {string} coin

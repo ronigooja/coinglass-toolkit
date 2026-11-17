@@ -114,17 +114,19 @@ async function draw(state, generation) {
 export const name = 'impact-cost'
 export const matches = ['https://www.coinglass.com/*/pro/futures/LiquidationMap']
 export function init(ctx) {
+  // The chart finder keys: 'binance' = the single-exchange chart (liqMap), 'exchange' = the aggregate chart.
   const states = { binance: { kind: 'binance', books: [], generation: 0 }, exchange: { kind: 'exchange', books: [], generation: 0 } }
   window.addEventListener('message', async (event) => {
     if (event.source !== window || event.origin !== location.origin || event.data?.source !== source || event.data.type !== 'request') return
     const request = parseRequest(event.data.url)
     if (!request) return
-    const state = states[request.kind]
+    const state = states[request.kind === 'exchange' ? 'exchange' : 'binance']
     const generation = ++state.generation
     state.books = []
     void draw(state, generation)
+    if (request.kind === 'unsupported') return
     try {
-      const result = await ctx.requestBooks(request.coin)
+      const result = await ctx.requestBooks(request.coin, request.kind === 'single' ? request.venue : undefined)
       if (generation !== state.generation) return
       state.books = result.books || []
       await draw(state, generation)

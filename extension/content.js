@@ -3,11 +3,11 @@
   const { modules } = await import(api.runtime.getURL('modules/index.js'))
   const { matchesUrl } = await import(api.runtime.getURL('shared/match.js'))
   const ctx = {
-    requestBooks: (coin) =>
+    requestBooks: (coin, venue) =>
       globalThis.browser
-        ? api.runtime.sendMessage({ type: 'books', coin })
+        ? api.runtime.sendMessage({ type: 'books', coin, venue })
         : new Promise((resolve, reject) => {
-            api.runtime.sendMessage({ type: 'books', coin }, (response) => {
+            api.runtime.sendMessage({ type: 'books', coin, venue }, (response) => {
               const error = api.runtime.lastError
               if (error) reject(new Error(error.message))
               else resolve(response)

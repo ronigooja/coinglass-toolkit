@@ -12,7 +12,9 @@ For a target price P, `cost(P)` is the cumulative notional in USDT a market orde
 ## Inputs
 
 - Coin: read from the `symbol` parameter of the page's own request. Source and status: [coinglass-page.md](../../../docs/coinglass-page.md).
-- Orderbooks: all registered venues, USDT perpetual markets only. A venue that lacks the coin is skipped.
+- Orderbooks, USDT perpetual markets only. A venue that lacks the coin is skipped.
+  - Single-exchange chart (`liqMap`): only the exchange named in `symbol`. If that exchange has no adapter, nothing is drawn.
+  - Aggregate chart (`exLiqMap`): all registered venues, merged.
 - Price axis of the chart: required for drawing. Access method is `Unverified`.
 
 ## Algorithm
@@ -30,7 +32,7 @@ Two series, up side and down side, drawn on a secondary Y axis sharing the chart
 
 A page-world script observes matching fetch and XHR request URLs without reading responses; newer requests supersede older orderbook results. Redraw on resize using the latest books. Only Binance USDT pairs are accepted for the Binance chart. See [page facts](../../../docs/coinglass-page.md) for request and refresh details.
 
-Axis access: the page-world script gets the ECharts instance from the React fiber of the chart container. The X axis is a category axis of ascending, unevenly spaced price labels, so a price is mapped to a fractional label index and then to pixels with the chart's own `convertToPixel`. The overlay redraws on the chart's `datazoom` and `finished` events. If the axis cannot be read, the overlay stays empty and logs the reason.
+Axis access: the page-world script gets the ECharts instance from the React fiber of the chart container. The X axis is a category axis of ascending, unevenly spaced price labels, so a price is mapped to a fractional label index and then to pixels with the chart's own `convertToPixel`. The overlay redraws on the chart's `datazoom` event. Why not `finished`: the overlay triggers chart redraws, which would loop. If the axis cannot be read, the overlay stays empty and logs the reason.
 
 Visible range: the order books cover roughly ±0.3% of price (see Algorithm), while the chart's default range is far wider. The curve fills the plot only after the user zooms the X axis to that range.
 

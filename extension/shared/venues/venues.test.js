@@ -83,3 +83,10 @@ test('fetchAllBooks isolates failures and skips unsupported venues', async () =>
   assert.equal(r.books.length, 1)
   assert.deepEqual(r.errors, [{ venue: 'bad', error: 'boom' }])
 })
+
+test('selectVenues picks one venue, all, or none', async () => {
+  const { selectVenues, venues } = await import('./index.js')
+  assert.deepEqual(selectVenues('okx').map((v) => v.name), ['okx'])
+  assert.equal(selectVenues(undefined).length, venues.length)
+  assert.equal(selectVenues('kraken').length, 0)
+})

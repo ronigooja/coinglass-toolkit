@@ -66,7 +66,6 @@
       if (chart && !chart.__impactCostWatched) {
         chart.__impactCostWatched = true
         chart.on('datazoom', () => window.postMessage({ source, type: 'zoom', attribute }, location.origin))
-        chart.on('finished', () => window.postMessage({ source, type: 'zoom', attribute }, location.origin))
       }
       return
     }
