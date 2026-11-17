@@ -20,8 +20,6 @@ test('coins with digits and long names', () => {
 })
 
 test('exchanges without an adapter are unsupported', () => {
-  assert.deepEqual(liq('MEXC_JCT_USDT'), { kind: 'unsupported', venue: 'mexc', name: 'MEXC' })
-  assert.deepEqual(liq('KuCoin_JCTUSDTM'), { kind: 'unsupported', venue: 'kucoin', name: 'KuCoin' })
   assert.deepEqual(liq('Kraken_PF_XBTUSD'), { kind: 'unsupported', venue: 'kraken', name: 'Kraken' })
 })
 
@@ -48,4 +46,13 @@ test('period comes from the interval the page sends', () => {
     assert.equal(p('2/exLiqMap?symbol=BTC', interval).period, label)
   }
   assert.equal(p('5/liqMap?symbol=Binance_BTCUSDT', 'weird').period, null)
+})
+
+test('MEXC, KuCoin, BingX and HTX symbols resolve to the coin', () => {
+  const r = (symbol) => parseRequest(`${base}5/liqMap?symbol=${symbol}`)
+  assert.deepEqual(r('MEXC_JCT_USDT'), { kind: 'single', venue: 'mexc', coin: 'JCT', period: null })
+  assert.deepEqual(r('KuCoin_JCTUSDTM'), { kind: 'single', venue: 'kucoin', coin: 'JCT', period: null })
+  assert.equal(r('KuCoin_XBTUSDTM').coin, 'BTC')
+  assert.deepEqual(r('BingX_SOL-USDT'), { kind: 'single', venue: 'bingx', coin: 'SOL', period: null })
+  assert.deepEqual(r('HTX_SOL-USDT'), { kind: 'single', venue: 'htx', coin: 'SOL', period: null })
 })

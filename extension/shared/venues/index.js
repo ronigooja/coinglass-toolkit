@@ -3,8 +3,12 @@ import { okx } from './okx.js'
 import { bybit } from './bybit.js'
 import { bitget } from './bitget.js'
 import { gate } from './gate.js'
+import { mexc } from './mexc.js'
+import { kucoin } from './kucoin.js'
+import { bingx } from './bingx.js'
+import { htx } from './htx.js'
 
-export const venues = [binance, okx, bybit, bitget, gate]
+export const venues = [binance, okx, bybit, bitget, gate, mexc, kucoin, bingx, htx]
 
 /** Select venues by name; no name selects all. An unknown name selects none. */
 export function selectVenues(name, list = venues) {

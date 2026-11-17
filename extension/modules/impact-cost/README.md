@@ -28,6 +28,8 @@ For a target price P, `cost(P)` is the cumulative notional in USDT a market orde
 
 Two series, up side and down side, drawn on the chart's own axes: the price X axis and the right Y axis (cumulative liquidation intensity, USDT). Why the right axis: cost is cumulative like that axis; the left axis shows per-price-level amounts and is far smaller. The right axis range is set by the page, so a curve above it is clipped. Colors differ from the page's red and green lines. Each series is solid up to its complete bound and dashed beyond it.
 
+Hovering the plot shows the cursor price, percentage distance from the order-book mid, and interpolated cumulative USDT on the corresponding drawn curve. The readout is a fixed one-line box in the notice style (muted gray, no fill), centred on x = 8 of the same 10 x 5 grid with its top edge on the top of the plot area, text vertically centred in the box, so it does not overlap the page's own tooltip that follows the cursor. It hides outside the curve range or when curves are unavailable; it does not block chart interactions.
+
 ## Notices
 
 Notices carry no title prefix; the chart shows only the message. The UI name is "订单簿累计深度". Why not "推价费用": cost reads as fees or slippage, while the value is the cumulative resting notional that must be consumed.

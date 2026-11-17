@@ -9,7 +9,11 @@
     "https://www.okx.com/*",
     "https://api.bybit.com/*",
     "https://api.bitget.com/*",
-    "https://api.gateio.ws/*"
+    "https://api.gateio.ws/*",
+    "https://contract.mexc.com/*",
+    "https://api-futures.kucoin.com/*",
+    "https://open-api.bingx.com/*",
+    "https://api.hbdm.com/*"
   ],
   "background": {
     "service_worker": "background.js",

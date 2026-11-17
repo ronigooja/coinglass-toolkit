@@ -1,10 +1,63 @@
 import { impactCurves } from '../../shared/impact.js'
 import { parseRequest } from './requests.js'
-import { priceToX, costToY, splitCurve } from './mapping.js'
+import { priceToX, xToPrice, costToY, splitCurve } from './mapping.js'
 
 const source = 'impact-cost-page-hook'
 let axisSequence = 0
 let warned = false
+const hovers = new WeakMap()
+
+// Plot area as a 10 x 5 grid, origin bottom-left. Notice box centre (2, 4.4); hover readout centred on x = 8, top edge on the plot top.
+const NOTICE_GRID = { cols: 10, rows: 5, x: 2, y: 4.4 }
+const HOVER_GRID = { cols: 10, rows: 5, x: 8, y: 5 } // y = 5 is the top edge; only x is used
+
+function gridPoint(rect, grid) {
+  return {
+    x: rect.left + (rect.right - rect.left) * grid.x / grid.cols,
+    y: rect.bottom - (rect.bottom - rect.top) * grid.y / grid.rows,
+  }
+}
+const compact = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 2 })
+const priceFormat = new Intl.NumberFormat('en-US', { maximumSignificantDigits: 8 })
+
+function hover(container) {
+  if (hovers.has(container)) return hovers.get(container)
+  const tooltip = document.createElement('div')
+  Object.assign(tooltip.style, { position: 'absolute', display: 'none', pointerEvents: 'none', zIndex: '11', boxSizing: 'border-box', height: '22px', alignItems: 'center', padding: '0 8px', border: '1px solid rgba(148, 163, 184, 0.35)', borderRadius: '6px', background: 'none', color: 'rgba(148, 163, 184, 0.8)', font: '12px -apple-system, "PingFang SC", sans-serif', whiteSpace: 'nowrap' })
+  container.appendChild(tooltip)
+  const data = { tooltip, axis: null, curves: null }
+  hovers.set(container, data)
+  container.addEventListener('mouseleave', () => { tooltip.style.display = 'none' }, { passive: true })
+  container.addEventListener('mousemove', (event) => {
+    const { axis, curves } = data
+    const bounds = container.getBoundingClientRect()
+    const x = event.clientX - bounds.left, y = event.clientY - bounds.top
+    if (!axis || !curves || x < axis.plotLeft || x > axis.plotRight || y < axis.plotTop || y > axis.plotBottom) {
+      tooltip.style.display = 'none'
+      return
+    }
+    const price = xToPrice(x, axis)
+    if (price === null) { tooltip.style.display = 'none'; return }
+    const points = price >= curves.mid ? curves.up : curves.down
+    let previous = [curves.mid, 0], cost = price === curves.mid ? 0 : null
+    for (const point of points) {
+      if (price >= curves.mid ? price <= point[0] : price >= point[0]) {
+        const a = priceToX(previous[0], axis), b = priceToX(point[0], axis)
+        if (a !== null && b !== null && a !== b) cost = previous[1] + (x - a) / (b - a) * (point[1] - previous[1])
+        break
+      }
+      previous = point
+    }
+    if (cost === null) { tooltip.style.display = 'none'; return }
+    const distance = (price / curves.mid - 1) * 100
+    tooltip.textContent = `价格 ${priceFormat.format(price)} · ${distance >= 0 ? '+' : ''}${distance.toFixed(2)}% · ${compact.format(cost)} USDT`
+    tooltip.style.display = 'flex'
+    const centre = gridPoint({ left: axis.plotLeft, right: axis.plotRight, top: axis.plotTop, bottom: axis.plotBottom }, HOVER_GRID)
+    tooltip.style.left = `${centre.x - tooltip.offsetWidth / 2}px`
+    tooltip.style.top = `${axis.plotTop}px`
+  }, { passive: true })
+  return data
+}
 
 // The page-world hook reads only documented ECharts options when available.
 export function getPriceAxis(container) {
@@ -55,15 +108,11 @@ function overlay(container) {
   return canvas
 }
 
-// Plot area as a 10 x 5 grid, origin bottom-left. The notice box is centred on (2, 4.4).
-const NOTICE_GRID = { cols: 10, rows: 5, x: 2, y: 4.4 }
-
 function drawNotice(ctx, rect, text) {
   ctx.font = '12px -apple-system, "PingFang SC", sans-serif'
   const w = ctx.measureText(text).width + 16, h = 22
-  const cx = rect.left + (rect.right - rect.left) * NOTICE_GRID.x / NOTICE_GRID.cols
-  const cy = rect.bottom - (rect.bottom - rect.top) * NOTICE_GRID.y / NOTICE_GRID.rows
-  const x = cx - w / 2, y = cy - h / 2
+  const c = gridPoint(rect, NOTICE_GRID)
+  const x = c.x - w / 2, y = c.y - h / 2
   ctx.strokeStyle = 'rgba(148, 163, 184, 0.35)'
   ctx.lineWidth = 1
   ctx.beginPath(); ctx.roundRect(x, y, w, h, 6); ctx.stroke()
@@ -76,6 +125,10 @@ async function draw(state, generation) {
   const container = findChart(state.kind)
   if (!container) return
   const canvas = overlay(container)
+  const hoverData = hover(container)
+  hoverData.axis = null
+  hoverData.curves = null
+  hoverData.tooltip.style.display = 'none'
   const ratio = window.devicePixelRatio || 1
   canvas.width = Math.round(container.clientWidth * ratio)
   canvas.height = Math.round(container.clientHeight * ratio)
@@ -122,6 +175,8 @@ async function draw(state, generation) {
     }
   }
   ctx.restore()
+  hoverData.axis = axis
+  hoverData.curves = curves
 }
 
 export const name = 'impact-cost'

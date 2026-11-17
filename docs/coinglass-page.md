@@ -29,7 +29,8 @@ Host `capi.coinglass.com`. Both requests are GET.
 
 | Fact | Status |
 |---|---|
-| The native symbol format differs per exchange: Binance `JCTUSDT`, Bybit `JCTUSDT`, OKX `JCT-USDT-SWAP`, Bitget `JCTUSDT_UMCBL`, Gate `JCT_USDT`, MEXC `JCT_USDT`, KuCoin `JCTUSDTM`. | Verified (2026-11-17) |
+| The native symbol format differs per exchange: Binance `JCTUSDT`, Bybit `JCTUSDT`, OKX `JCT-USDT-SWAP`, Bitget `JCTUSDT_UMCBL`, Gate `JCT_USDT`, MEXC `JCT_USDT`, KuCoin `JCTUSDTM`, BingX `SOL-USDT`, HTX `SOL-USDT`. | Verified (2026-11-17) |
+| KuCoin names BTC `XBT`: the page sends `KuCoin_XBTUSDTM`. | Verified (2026-11-17) |
 | `exLiqMap` `symbol` is the coin only; it carries no exchange. | Verified (2026-11-17) |
 | The period selector ("1天", "7天", "30天", "90天", "180天", "1年") sets the `interval` of both requests: `1`, `5`, `30`, `90d`, `180d`, `365d` in that order. `limit` varies with it. | Verified (2026-11-17) |
 | Request headers include `encryption: true`, `cache-ts-v2`, `language`; cookies include `obe` and `api_grade`. | Verified (2026-11-17) |

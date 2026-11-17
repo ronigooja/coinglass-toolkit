@@ -6,6 +6,10 @@ const NATIVE = {
   okx: /^(.+)-USDT-SWAP$/,
   bitget: /^(.+)USDT_UMCBL$/,
   gate: /^(.+)_USDT$/,
+  mexc: /^(.+)_USDT$/,
+  kucoin: /^(.+)USDTM$/,
+  bingx: /^(.+)-USDT$/,
+  htx: /^(.+)-USDT$/,
 }
 
 // `interval` values the page sends for the period selector. Anything but '1' (1 day) is a longer window.
@@ -25,7 +29,7 @@ export function parseRequest(value) {
     const name = cut < 0 ? symbol : symbol.slice(0, cut)
     const venue = name.toLowerCase()
     const match = cut < 0 ? null : NATIVE[venue]?.exec(symbol.slice(cut + 1))
-    return match ? { kind: 'single', venue, coin: match[1].toUpperCase(), period } : { kind: 'unsupported', venue, name }
+    return match ? { kind: 'single', venue, coin: match[1].toUpperCase() === 'XBT' ? 'BTC' : match[1].toUpperCase(), period } : { kind: 'unsupported', venue, name }
   }
   if (url.pathname === '/api/index/2/exLiqMap' && /^[A-Za-z0-9]+$/.test(symbol)) {
     return { kind: 'exchange', coin: symbol.toUpperCase(), period }

@@ -25,6 +25,30 @@ export function priceToX(price, axis) {
   return at(i) + (idx - i) * (at(i + 1) - at(i))
 }
 
+export function xToPrice(x, axis) {
+  const { firstIndex: first, lastIndex: last, indexPx, prices } = axis
+  if (!Number.isFinite(x) || last <= first) return null
+  const ascending = indexPx.at(-1) > indexPx[0]
+  const before = (a, b) => ascending ? a < b : a > b
+  let lo = 0, hi = indexPx.length - 1
+  if (before(x, indexPx[lo])) hi = 1
+  else if (before(indexPx[hi], x)) lo = hi - 1
+  else {
+    while (hi - lo > 1) {
+      const mid = (lo + hi) >> 1
+      if (before(x, indexPx[mid])) hi = mid
+      else lo = mid
+    }
+  }
+  const span = indexPx[hi] - indexPx[lo]
+  if (!span) return null
+  const index = first + lo + (x - indexPx[lo]) / span
+  if (index < 0 || index > prices.length - 1) return null
+  const i = Math.floor(index)
+  if (i === prices.length - 1) return prices[i]
+  return prices[i] + (index - i) * (prices[i + 1] - prices[i])
+}
+
 // Pixel y of a cost on the page's right Y axis (linear value axis, USDT).
 export function costToY(cost, axis) {
   return axis.yPxMin + (cost - axis.yMin) / (axis.yMax - axis.yMin) * (axis.yPxMax - axis.yPxMin)
