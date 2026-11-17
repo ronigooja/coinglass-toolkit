@@ -1,6 +1,6 @@
 # impact-cost
 
-Draws a price-impact cost curve over the CoinGlass "Binance liquidation map" and "exchange liquidation map" charts each time the chart refreshes.
+Draws an order book cumulative depth curve (shown in the UI as "订单簿累计深度") over the CoinGlass "Binance liquidation map" and "exchange liquidation map" charts each time the chart refreshes.
 
 ## Definition
 
@@ -26,13 +26,21 @@ For a target price P, `cost(P)` is the cumulative notional in USDT a market orde
 
 ## Output
 
-Two series, up side and down side, drawn on a secondary Y axis sharing the chart's price X axis. Each series is solid up to its complete bound and dashed beyond it.
+Two series, up side and down side, drawn on the chart's own axes: the price X axis and the right Y axis (cumulative liquidation intensity, USDT). Why the right axis: cost is cumulative like that axis; the left axis shows per-price-level amounts and is far smaller. The right axis range is set by the page, so a curve above it is clipped. Colors differ from the page's red and green lines. Each series is solid up to its complete bound and dashed beyond it.
+
+## Notices
+
+Notices carry no title prefix; the chart shows only the message. The UI name is "订单簿累计深度". Why not "推价费用": cost reads as fees or slippage, while the value is the cumulative resting notional that must be consumed.
+
+When nothing can be drawn, the overlay shows a small one-line notice instead of staying blank: the selected exchange has no adapter, or no venue returned an order book for the coin. The notice is muted gray with no fill, and its centre sits at (2, 4.4) when the plot area is a 10 x 5 grid with the origin at the bottom-left.
+
+Period: the order book is always the live book, while the 7-day to 1-year liquidation maps accumulate over their window. For any period other than 1天 the curves are still drawn and the notice reads "当前订单簿，非<period>累计". The period is taken from the `interval` the page sends, see [coinglass-page.md](../../../docs/coinglass-page.md).
 
 ## Trigger
 
 A page-world script observes matching fetch and XHR request URLs without reading responses; newer requests supersede older orderbook results. Redraw on resize using the latest books. Only Binance USDT pairs are accepted for the Binance chart. See [page facts](../../../docs/coinglass-page.md) for request and refresh details.
 
-Axis access: the page-world script gets the ECharts instance from the React fiber of the chart container. The X axis is a category axis of ascending, unevenly spaced price labels, so a price is mapped to a fractional label index and then to pixels with the chart's own `convertToPixel`. The overlay redraws on the chart's `datazoom` event. Why not `finished`: the overlay triggers chart redraws, which would loop. If the axis cannot be read, the overlay stays empty and logs the reason.
+Axis access: the page-world script gets the ECharts instance from the React fiber of the chart container. The X axis is a category axis of ascending, unevenly spaced price labels, so a price is mapped to a fractional label index and then to pixels with the chart's own `convertToPixel`. The page-world script polls each watched chart's axis geometry every 300 ms and the overlay redraws when it changes (zoom, resize, chart rebuilt). Why not chart events: the page rebuilds chart instances, which dropped the bindings and left the overlay stale; `finished` also loops because the overlay triggers redraws. If the axis cannot be read, the overlay stays empty and logs the reason.
 
 Visible range: the order books cover roughly ±0.3% of price (see Algorithm), while the chart's default range is far wider. The curve fills the plot only after the user zooms the X axis to that range.
 

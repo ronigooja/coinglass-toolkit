@@ -25,8 +25,9 @@ export function priceToX(price, axis) {
   return at(i) + (idx - i) * (at(i + 1) - at(i))
 }
 
-export function costToY(cost, maxCost, axis) {
-  return axis.plotBottom - cost / maxCost * (axis.plotBottom - axis.plotTop)
+// Pixel y of a cost on the page's right Y axis (linear value axis, USDT).
+export function costToY(cost, axis) {
+  return axis.yPxMin + (cost - axis.yMin) / (axis.yMax - axis.yMin) * (axis.yPxMax - axis.yPxMin)
 }
 
 // Include the interpolated boundary in both paths so line styles meet without a gap.

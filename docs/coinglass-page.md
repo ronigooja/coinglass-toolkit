@@ -24,8 +24,9 @@ Host `capi.coinglass.com`. Both requests are GET.
 
 | Fact | Status |
 |---|---|
-| `liqMap` `symbol` has the form `<Exchange>_<Pair>`. | Verified (2026-11-17) |
+| `liqMap` `symbol` has the form `<Exchange>_<native symbol>`, and the native format differs per exchange: Binance `JCTUSDT`, Bybit `JCTUSDT`, OKX `JCT-USDT-SWAP`, Bitget `JCTUSDT_UMCBL`, Gate `JCT_USDT`, MEXC `JCT_USDT`, KuCoin `JCTUSDTM`. | Verified (2026-11-17) |
 | `exLiqMap` `symbol` is the coin only; it carries no exchange. | Verified (2026-11-17), logged out |
+| The period selector ("1天", "7天", "30天", "90天", "180天", "1年") sets the `interval` of both requests: `1`, `5`, `30`, `90d`, `180d`, `365d` in that order. | Verified (2026-11-17) |
 | Request headers include `encryption: true`, `cache-ts-v2`, `language`; cookies include `obe` and `api_grade`. | Verified (2026-11-17) |
 | The response has headers `encryption: true` and `ev: 2`; the body is not plain JSON. | Verified (2026-11-17), from the response headers |
 | In a headless logged-out browser, the page's own requests to both endpoints returned `{"code":"40000"}`. Cause unknown. | Verified (2026-11-17) |

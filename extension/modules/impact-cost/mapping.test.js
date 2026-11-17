@@ -14,6 +14,15 @@ test('priceToIndex interpolates between uneven labels and rejects outside', () =
   assert.equal(priceToIndex(201, axis.prices), null)
 })
 
+test('priceToIndex tolerates repeated labels', () => {
+  const prices = [73.6, 73.7, 73.8, 73.8, 73.9]
+  assert.ok([2, 3].includes(priceToIndex(73.8, prices)))
+  assert.ok(Math.abs(priceToIndex(73.75, prices) - 1.5) < 1e-9)
+  assert.ok(Math.abs(priceToIndex(73.85, prices) - 3.5) < 1e-9)
+  assert.equal(priceToIndex(73.6, prices), 0)
+  assert.equal(priceToIndex(73.9, prices), 4)
+})
+
 test('priceToX follows pixel positions of the visible indexes', () => {
   assert.equal(priceToX(120, axis), 15)
   assert.equal(priceToX(130, axis), 20)
@@ -27,8 +36,12 @@ test('priceToX extrapolates outside the zoomed window', () => {
   assert.equal(priceToX(115, zoomed), 50)
 })
 
-test('costToY maps cost to plot height', () => {
-  assert.equal(costToY(25, 100, axis), 95)
+test('costToY follows the page right Y axis', () => {
+  const y = { yMin: 1000, yMax: 3000, yPxMin: 340, yPxMax: 40 }
+  assert.equal(costToY(1000, y), 340)
+  assert.equal(costToY(3000, y), 40)
+  assert.equal(costToY(2000, y), 190)
+  assert.equal(costToY(0, y), 490)
 })
 
 test('split curves at interpolated completeness boundary in both directions', () => {
