@@ -1,0 +1,27 @@
+# Development
+
+## Test
+
+Unit tests sit next to the code as `*.test.js` and run with the Node built-in runner: `node --test`. Tests use recorded public venue orderbook responses as fixtures.
+
+## Package for Safari
+
+`xcrun safari-web-extension-converter extension/` generates the Xcode project from the WebExtension source. Build it on a GitHub-hosted macOS runner.
+
+## Manual check in Safari
+
+Page behavior cannot be tested offline. Enable Safari's Develop menu, allow unsigned extensions, load the built extension, open the target page logged in, and compare against the module's acceptance criteria. Record confirmed page facts in [coinglass-page.md](coinglass-page.md).
+
+## Add a module
+
+1. Create `extension/modules/<name>/` with `index.js` and `README.md` (spec).
+2. Export the module contract defined in [architecture.md](architecture.md).
+3. Register it in `extension/modules/index.js`.
+4. Add a row to the document map in [README.md](../README.md).
+
+## Add a venue
+
+1. Create `extension/shared/venues/<venue>.js` implementing [the adapter contract](../extension/shared/venues/README.md).
+2. Put the endpoint URL, parameters, and contract-size conversion in the file header comment, taken from the venue's official documentation.
+3. Register it in `extension/shared/venues/index.js`.
+4. Add a test using a recorded response fixture.
