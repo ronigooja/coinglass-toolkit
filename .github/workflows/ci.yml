@@ -34,7 +34,7 @@ jobs:
       - name: Convert and build Safari extension
         run: |
           xcrun safari-web-extension-converter extension/ --project-location build --no-open --no-prompt --macos-only --app-name coinglass-toolkit > build.log 2>&1 || { tail -n 100 build.log; exit 1; }
-          xcodebuild -project build/coinglass-toolkit/coinglass-toolkit.xcodeproj -scheme "coinglass-toolkit (macOS)" -configuration Debug CODE_SIGNING_ALLOWED=NO build >> build.log 2>&1 || { tail -n 100 build.log; exit 1; }
+          xcodebuild -project build/coinglass-toolkit/coinglass-toolkit.xcodeproj -scheme coinglass-toolkit -configuration Debug CODE_SIGNING_ALLOWED=NO build >> build.log 2>&1 || { tail -n 100 build.log; exit 1; }
       - name: Upload build log on failure
         if: failure()
         uses: actions/upload-artifact@v7
