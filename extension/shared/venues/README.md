@@ -11,9 +11,11 @@ An adapter turns one venue's public orderbook into the normalized form. Venue-sp
  *
  * @typedef {Object} VenueAdapter
  * @property {string} name
- * @property {(coin: string) => Promise<Book | null>} fetchBook
+ * @property {(coin: string, fetchJson?: (url: string) => Promise<any>) => Promise<Book | null>} fetchBook
  */
 ```
+
+`fetchJson` is injectable so tests can serve recorded responses from `fixtures/`.
 
 ## Rules
 

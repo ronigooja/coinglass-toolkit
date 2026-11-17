@@ -20,11 +20,11 @@ For a target price P, `cost(P)` is the cumulative notional in USDT a market orde
 1. Merge all venue books: bids sorted descending, asks ascending, quantities at equal prices summed.
 2. Mid = (best merged bid + best merged ask) / 2.
 3. Walk each side and accumulate notional per price level to produce `(price, cost)` points.
-4. Limit each side to the price range that every participating venue covers. Why: beyond a venue's deepest level the merged book is incomplete and cost would be understated.
+4. Compute a complete bound per side: the price where the shallowest participating venue runs out of levels. Why: venue depths differ widely (about ±20 USD to ±135 USD for BTC), so truncating at the shallowest venue would leave a curve too short to be useful. Beyond the bound the cost is understated.
 
 ## Output
 
-Two series, up side and down side, drawn on a secondary Y axis sharing the chart's price X axis.
+Two series, up side and down side, drawn on a secondary Y axis sharing the chart's price X axis. Each series is solid up to its complete bound and dashed beyond it.
 
 ## Trigger
 

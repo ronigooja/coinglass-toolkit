@@ -1,0 +1,8 @@
+{
+  "name": "coinglass-toolkit",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  }
+}
