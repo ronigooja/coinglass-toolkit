@@ -67,6 +67,7 @@ async function draw(state, generation) {
   ctx.clearRect(0, 0, container.clientWidth, container.clientHeight)
   const curves = impactCurves(state.books)
   if (!curves) return
+  window.postMessage({ source: 'impact-cost-content', type: 'watch', attribute: container.getAttribute('_echarts_instance_') }, location.origin)
   const axis = await getPriceAxis(container)
   if (generation !== state.generation) return
   if (!axis) {
@@ -97,10 +98,13 @@ async function draw(state, generation) {
     for (const style of ['solid', 'dashed']) {
       ctx.setLineDash(style === 'solid' ? [] : [6, 4])
       ctx.beginPath()
-      paths[style].forEach(([price, cost], i) => {
-        const x = priceToX(price, axis), y = costToY(cost, maxCost, axis)
-        if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y)
-      })
+      let started = false
+      for (const [price, cost] of paths[style]) {
+        const x = priceToX(price, axis)
+        if (x === null) continue
+        const y = costToY(cost, maxCost, axis)
+        if (started) ctx.lineTo(x, y); else { ctx.moveTo(x, y); started = true }
+      }
       ctx.stroke()
     }
   }
@@ -126,6 +130,13 @@ export function init(ctx) {
       await draw(state, generation)
     } catch (error) {
       if (generation === state.generation) console.warn('impact-cost: orderbooks unavailable', error)
+    }
+  })
+  window.addEventListener('message', (event) => {
+    if (event.source !== window || event.origin !== location.origin || event.data?.source !== source || event.data.type !== 'zoom') return
+    for (const state of Object.values(states)) {
+      const container = findChart(state.kind)
+      if (container?.getAttribute('_echarts_instance_') === event.data.attribute) void draw(state, state.generation)
     }
   })
   window.addEventListener('resize', () => {

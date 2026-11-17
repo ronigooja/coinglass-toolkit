@@ -31,42 +31,48 @@
     return null
   }
 
-  // Price axis from the chart's own coordinate conversion; no dependence on option values.
+  // The X axis is a category axis whose labels are prices with uneven spacing. A price is mapped
+  // to a fractional category index by interpolating between neighbouring labels, then to pixels
+  // with the chart's own conversion.
   function readAxis(container) {
     const chart = findChart(container)
     if (!chart || typeof chart.convertToPixel !== 'function') return { axis: null, reason: 'no-instance' }
-    const opt = chart.getOption()
-    const xa = opt?.xAxis?.[0]
-    const ext = chart.getModel?.().getComponent('xAxis', 0)?.axis?.scale?.getExtent?.()
-    if (!ext || !(ext[1] > ext[0])) return { axis: null, reason: 'no-x-extent', xType: xa?.type }
-    const isCategory = xa?.type === 'category'
-    const toPx = (v) => chart.convertToPixel({ xAxisIndex: 0 }, v)
-    const left = toPx(ext[0]), right = toPx(ext[1])
-    if (!Number.isFinite(left) || !Number.isFinite(right)) return { axis: null, reason: 'no-pixel' }
-    const grid = chart.getModel().getComponent('grid', 0)?.coordinateSystem?.getRect?.()
-    if (!grid) return { axis: null, reason: 'no-grid' }
-    let minPrice = ext[0], maxPrice = ext[1]
-    if (isCategory) {
-      const data = xa.data
-      const num = (i) => Number(typeof data[i] === 'object' ? data[i].value : data[i])
-      minPrice = num(Math.max(0, Math.ceil(ext[0])))
-      maxPrice = num(Math.min(data.length - 1, Math.floor(ext[1])))
-      if (!Number.isFinite(minPrice) || !Number.isFinite(maxPrice)) return { axis: null, reason: 'category-not-numeric' }
-    }
+    const xa = chart.getOption()?.xAxis?.[0]
+    if (xa?.type !== 'category' || !xa.data?.length) return { axis: null, reason: 'x-not-category' }
+    const prices = xa.data.map((d) => Number(typeof d === 'object' ? d.value : d))
+    if (prices.some((p, i) => !Number.isFinite(p) || (i && p <= prices[i - 1]))) return { axis: null, reason: 'labels-not-ascending-numbers' }
+    const rect = chart.getModel().getComponent('grid', 0)?.coordinateSystem?.getRect?.()
+    const ext = chart.getModel().getComponent('xAxis', 0)?.axis?.scale?.getExtent?.()
+    if (!rect || !ext) return { axis: null, reason: 'no-grid' }
+    const lo = Math.max(0, Math.ceil(ext[0])), hi = Math.min(prices.length - 1, Math.floor(ext[1]))
+    if (hi <= lo) return { axis: null, reason: 'empty-visible-range' }
+    const px = (i) => chart.convertToPixel({ xAxisIndex: 0 }, i)
     return {
-      axis: { minPrice, maxPrice, plotLeft: grid.x, plotRight: grid.x + grid.width, plotTop: grid.y, plotBottom: grid.y + grid.height },
-      info: { xType: xa?.type, extent: ext },
+      axis: {
+        prices, firstIndex: lo, lastIndex: hi, minPrice: prices[lo], maxPrice: prices[hi],
+        indexPx: Array.from({ length: hi - lo + 1 }, (_, k) => px(lo + k)),
+        plotLeft: rect.x, plotRight: rect.x + rect.width, plotTop: rect.y, plotBottom: rect.y + rect.height,
+      },
     }
   }
 
   window.addEventListener('message', (event) => {
-    if (event.source !== window || event.origin !== location.origin || event.data?.source !== 'impact-cost-content' || event.data.type !== 'axis') return
-    const { id, attribute } = event.data
+    if (event.source !== window || event.origin !== location.origin || event.data?.source !== 'impact-cost-content') return
+    const { type, id, attribute } = event.data
+    const container = [...document.querySelectorAll('[_echarts_instance_]')].find((el) => el.getAttribute('_echarts_instance_') === attribute)
+    if (!container) return
+    if (type === 'watch') {
+      const chart = findChart(container)
+      if (chart && !chart.__impactCostWatched) {
+        chart.__impactCostWatched = true
+        chart.on('datazoom', () => window.postMessage({ source, type: 'zoom', attribute }, location.origin))
+        chart.on('finished', () => window.postMessage({ source, type: 'zoom', attribute }, location.origin))
+      }
+      return
+    }
+    if (type !== 'axis') return
     let result = { axis: null, reason: 'error' }
-    try {
-      const container = [...document.querySelectorAll('[_echarts_instance_]')].find((el) => el.getAttribute('_echarts_instance_') === attribute)
-      if (container) result = readAxis(container)
-    } catch (e) { result = { axis: null, reason: 'exception: ' + String(e?.message ?? e) } }
-    window.postMessage({ source, type: 'axis', id, axis: result.axis, reason: result.reason, info: result.info }, location.origin)
+    try { result = readAxis(container) } catch (e) { result = { axis: null, reason: 'exception: ' + String(e?.message ?? e) } }
+    window.postMessage({ source, type: 'axis', id, axis: result.axis, reason: result.reason }, location.origin)
   })
 })()

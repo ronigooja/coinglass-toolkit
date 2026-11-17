@@ -30,7 +30,9 @@ Two series, up side and down side, drawn on a secondary Y axis sharing the chart
 
 A page-world script observes matching fetch and XHR request URLs without reading responses; newer requests supersede older orderbook results. Redraw on resize using the latest books. Only Binance USDT pairs are accepted for the Binance chart. See [page facts](../../../docs/coinglass-page.md) for request and refresh details.
 
-Axis access is `Unverified`: the page-world script tries the public `window.echarts.getInstanceByDom` API and requires explicit numeric axis and grid options. If unavailable, the overlay stays empty and logs `impact-cost: price axis unavailable`.
+Axis access: the page-world script gets the ECharts instance from the React fiber of the chart container. The X axis is a category axis of ascending, unevenly spaced price labels, so a price is mapped to a fractional label index and then to pixels with the chart's own `convertToPixel`. The overlay redraws on the chart's `datazoom` and `finished` events. If the axis cannot be read, the overlay stays empty and logs the reason.
+
+Visible range: the order books cover roughly ±0.3% of price (see Algorithm), while the chart's default range is far wider. The curve fills the plot only after the user zooms the X axis to that range.
 
 ## Acceptance
 
