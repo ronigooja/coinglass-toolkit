@@ -14,7 +14,14 @@ CI also runs a Safari packaging job after the test job.
 
 ## Manual check in Safari
 
-Page behavior cannot be tested offline. Enable Safari's Develop menu, allow unsigned extensions, load the built extension, open the target page logged in, and compare against the module's acceptance criteria. Record confirmed page facts in [coinglass-page.md](coinglass-page.md).
+Page behavior cannot be tested offline. Record confirmed page facts in [coinglass-page.md](coinglass-page.md).
+
+1. Install the built extension: `SIGN_IDENTITY=<identity> scripts/safari/install.sh`. List identities with `security find-identity -v -p codesigning`. Settings and what it does: header of [install.sh](../scripts/safari/install.sh). Enable the extension in Safari > Settings > Extensions on first install.
+2. Log in to CoinGlass in Safari, then drive and inspect the page with [page.sh](../scripts/safari/page.sh). It needs Safari > Settings > Developer > "Allow JavaScript from Apple Events"; turn it off afterwards. Chart helpers (`axes`, `overlayStats`, `zoomToCurrent`, `pickPeriod`, ...) are in [chart.js](../scripts/safari/lib/chart.js).
+
+Example: `scripts/safari/page.sh open`, then `scripts/safari/page.sh eval '__ctk.overlayStats(0)'`.
+
+Non-ASCII text in injected code is garbled by osascript. Write Chinese strings as `\uXXXX` escapes in JavaScript passed to `page.sh`.
 
 ## Add a module
 
