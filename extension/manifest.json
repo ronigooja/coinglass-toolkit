@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "CoinGlass Toolkit",
+  "version": "0.1.0",
+  "host_permissions": [
+    "https://www.coinglass.com/*",
+    "https://fapi.binance.com/*",
+    "https://www.okx.com/*",
+    "https://api.bybit.com/*",
+    "https://api.bitget.com/*",
+    "https://api.gateio.ws/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.coinglass.com/*"],
+      "js": ["content.js"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["modules/*.js", "shared/*.js"],
+      "matches": ["https://www.coinglass.com/*"]
+    }
+  ]
+}

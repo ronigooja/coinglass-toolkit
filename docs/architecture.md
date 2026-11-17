@@ -22,10 +22,10 @@ Manifest V3 WebExtension, packaged for Safari. Source lives in `extension/`.
 
 `extension/modules/<name>/index.js` exports `{ name, matches, init(ctx) }`.
 
-- `matches`: URL pattern list the module applies to.
-- `init(ctx)`: called once per matching page. `ctx` provides page hooks, an orderbook request function, and an overlay helper from `shared/`.
+- `matches`: WebExtension URL match pattern list the module applies to.
+- `init(ctx)`: called once per matching page. `ctx.requestBooks(coin)` returns a promise for `{ books, errors }` from background. `ctx.onChartRefresh` is `null`, a placeholder for a future refresh hook; it does not observe page requests.
 
-Modules are listed in `extension/modules/index.js`.
+Modules are listed by path in `extension/modules/index.js` and loaded independently; a load or initialization failure does not block other modules. Modules import shared helpers directly.
 
 ## Constraints
 
