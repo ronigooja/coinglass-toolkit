@@ -28,7 +28,9 @@ Two series, up side and down side, drawn on a secondary Y axis sharing the chart
 
 ## Trigger
 
-Recompute and redraw when the page issues a `liqMap` or `exLiqMap` request, which includes clicks on the chart's refresh button.
+A page-world script observes matching fetch and XHR request URLs without reading responses; newer requests supersede older orderbook results. Redraw on resize using the latest books. Only Binance USDT pairs are accepted for the Binance chart. See [page facts](../../../docs/coinglass-page.md) for request and refresh details.
+
+Axis access is `Unverified`: the page-world script tries the public `window.echarts.getInstanceByDom` API and requires explicit numeric axis and grid options. If unavailable, the overlay stays empty and logs `impact-cost: price axis unavailable`.
 
 ## Acceptance
 
