@@ -19,7 +19,10 @@ export function getPriceAxis(container) {
       resolve(axis)
     }
     function receive(event) {
-      if (event.source === window && event.origin === location.origin && event.data?.source === source && event.data.type === 'axis' && event.data.id === id) finish(event.data.axis)
+      if (event.source === window && event.origin === location.origin && event.data?.source === source && event.data.type === 'axis' && event.data.id === id) {
+        if (!event.data.axis) console.warn('impact-cost: axis read failed:', event.data.reason, event.data.info ?? '')
+        finish(event.data.axis)
+      }
     }
     window.addEventListener('message', receive)
     window.postMessage({ source: 'impact-cost-content', type: 'axis', id, attribute }, location.origin)
