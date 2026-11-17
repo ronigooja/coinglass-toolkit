@@ -6,7 +6,7 @@
 # Environment:
 #   SIGN_IDENTITY  required; list yours with: security find-identity -v -p codesigning
 #   CTK_WORK       build directory, default $HOME/Agents/coinglass-toolkit
-#   CTK_BUNDLE_ID  bundle identifier, default com.yourCompany.coinglass-toolkit (the converter default)
+#   CTK_BUNDLE_ID  bundle identifier, default io.github.ronigooja.coinglass-toolkit
 #
 # Safari lists an extension only when its app and extension are sandboxed and signed, so both are
 # re-signed with the entitlements below. Quits Safari and the app, then reopens them.
@@ -15,7 +15,7 @@ set -euo pipefail
 : "${SIGN_IDENTITY:?set SIGN_IDENTITY, see: security find-identity -v -p codesigning}"
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 WORK="${CTK_WORK:-$HOME/Agents/coinglass-toolkit}"
-BUNDLE_ID="${CTK_BUNDLE_ID:-com.yourCompany.coinglass-toolkit}"
+BUNDLE_ID="${CTK_BUNDLE_ID:-io.github.ronigooja.coinglass-toolkit}"
 APP="coinglass-toolkit"
 LOG="$WORK/install.log"
 
