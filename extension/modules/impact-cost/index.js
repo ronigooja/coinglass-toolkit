@@ -121,6 +121,39 @@ function drawNotice(ctx, rect, text) {
   ctx.fillText(text, x + 8, y + h / 2)
 }
 
+// One-line legend on the top edge of the plot, centred on x = 5 of the grid, in the notice style.
+// The dashed sample appears only on the aggregate chart: a single venue never has a dashed part.
+function drawLegend(ctx, axis, sides, aggregate) {
+  const entries = [
+    { text: '上方卖盘累计', color: sides[0].color, dash: [] },
+    { text: '下方买盘累计', color: sides[1].color, dash: [] },
+  ]
+  if (aggregate) entries.push({ text: '部分交易所深度不足', color: 'rgba(148, 163, 184, 0.8)', dash: [4, 3] })
+  const swatch = 18, gap = 6, spacing = 14, pad = 8, h = 22
+  ctx.save()
+  ctx.font = '12px -apple-system, "PingFang SC", sans-serif'
+  const widths = entries.map((e) => swatch + gap + ctx.measureText(e.text).width)
+  const w = widths.reduce((a, b) => a + b, 0) + spacing * (entries.length - 1) + pad * 2
+  const rect = { left: axis.plotLeft, right: axis.plotRight, top: axis.plotTop, bottom: axis.plotBottom }
+  const x0 = gridPoint(rect, { cols: 10, rows: 5, x: 5, y: 5 }).x - w / 2, y0 = axis.plotTop
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.35)'
+  ctx.lineWidth = 1
+  ctx.beginPath(); ctx.roundRect(x0, y0, w, h, 6); ctx.stroke()
+  ctx.textBaseline = 'middle'
+  let x = x0 + pad
+  entries.forEach((e, i) => {
+    ctx.strokeStyle = e.color
+    ctx.lineWidth = 2
+    ctx.setLineDash(e.dash)
+    ctx.beginPath(); ctx.moveTo(x, y0 + h / 2); ctx.lineTo(x + swatch, y0 + h / 2); ctx.stroke()
+    ctx.setLineDash([])
+    ctx.fillStyle = 'rgba(148, 163, 184, 0.8)'
+    ctx.fillText(e.text, x + swatch + gap, y0 + h / 2)
+    x += widths[i] + spacing
+  })
+  ctx.restore()
+}
+
 async function draw(state, generation) {
   const container = findChart(state.kind)
   if (!container) return
@@ -175,8 +208,16 @@ async function draw(state, generation) {
     }
   }
   ctx.restore()
+  drawLegend(ctx, axis, sides, state.kind === 'exchange')
   hoverData.axis = axis
   hoverData.curves = curves
+}
+
+// On first load the chart can render after the order books arrive; wait for it, at most 20 s.
+async function untilChart(state, generation) {
+  for (let i = 0; i < 67 && generation === state.generation && !findChart(state.kind); i++) {
+    await new Promise((resolve) => setTimeout(resolve, 300))
+  }
 }
 
 export const name = 'impact-cost'
@@ -184,9 +225,8 @@ export const matches = ['https://www.coinglass.com/*/pro/futures/LiquidationMap'
 export function init(ctx) {
   // The chart finder keys: 'binance' = the single-exchange chart (liqMap), 'exchange' = the aggregate chart.
   const states = { binance: { kind: 'binance', books: [], generation: 0 }, exchange: { kind: 'exchange', books: [], generation: 0 } }
-  window.addEventListener('message', async (event) => {
-    if (event.source !== window || event.origin !== location.origin || event.data?.source !== source || event.data.type !== 'request') return
-    const request = parseRequest(event.data.url)
+  const handle = async (url) => {
+    const request = parseRequest(url)
     if (!request) return
     const state = states[request.kind === 'exchange' ? 'exchange' : 'binance']
     const generation = ++state.generation
@@ -201,10 +241,16 @@ export function init(ctx) {
       state.books = result.books || []
       if (result.errors?.length) console.warn('impact-cost: venue errors', result.errors)
       state.notice = emptyBooksNotice(request, result)
+      await untilChart(state, generation)
+      if (generation !== state.generation) return
       await draw(state, generation)
     } catch (error) {
       if (generation === state.generation) console.warn('impact-cost: orderbooks unavailable', error)
     }
+  }
+  window.addEventListener('message', (event) => {
+    if (event.source !== window || event.origin !== location.origin || event.data?.source !== source || event.data.type !== 'request') return
+    void handle(event.data.url)
   })
   window.addEventListener('message', (event) => {
     if (event.source !== window || event.origin !== location.origin || event.data?.source !== source || event.data.type !== 'zoom') return
@@ -215,7 +261,10 @@ export function init(ctx) {
   })
   const script = document.createElement('script')
   script.src = (globalThis.browser || globalThis.chrome).runtime.getURL('modules/impact-cost/page-hook.js')
-  script.onload = () => script.remove()
   ;(document.head || document.documentElement).appendChild(script)
+  // The page requests its data on load, before this script runs. Ask the hook to replay the requests it saw.
+  const ready = () => window.postMessage({ source: 'impact-cost-content', type: 'ready' }, location.origin)
+  script.onload = () => { script.remove(); ready() }
+  ready()
 }
 export default { name, matches, init }

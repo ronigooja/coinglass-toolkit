@@ -38,9 +38,13 @@ When nothing can be drawn, the overlay shows a small one-line notice instead of 
 
 Period: the order book is always the live book, while the 7-day to 1-year liquidation maps accumulate over their window. For any period other than 1天 the curves are still drawn and the notice reads "当前订单簿，非<period>累计". The period is taken from the `interval` the page sends, see [coinglass-page.md](../../../docs/coinglass-page.md).
 
+## Legend
+
+A one-line legend is drawn on the overlay whenever curves are drawn: orange `上方卖盘累计` (ask side, price up), cyan `下方买盘累计` (bid side, price down), and, on the aggregate chart only, a dashed gray sample `部分交易所深度不足` for the dashed part of a curve, where at least one venue's book has no deeper levels so the value is understated. The single-exchange chart never has a dashed part, so its legend has two items. It sits on the top edge of the plot, centred on x = 5 of the same 10 x 5 grid, in the notice style (muted gray, no fill; only the line samples use the curve colors). It is not drawn while a notice is shown.
+
 ## Trigger
 
-A page-world script observes matching fetch and XHR request URLs without reading responses; newer requests supersede older orderbook results. Redraw on resize using the latest books. Only Binance USDT pairs are accepted for the Binance chart. See [page facts](../../../docs/coinglass-page.md) for request and refresh details.
+A page-world script observes matching fetch and XHR request URLs without reading responses; newer requests supersede older orderbook results. The page requests its data on load, before the module runs, so the page-world script is also declared as a `document_start` content script in the manifest (`world: MAIN`), and it remembers the latest request per endpoint and replays them when the module sends `ready` after registering its listeners. Drawing waits up to 20 s for the chart to render. Redraw on resize using the latest books. Only Binance USDT pairs are accepted for the Binance chart. See [page facts](../../../docs/coinglass-page.md) for request and refresh details.
 
 Axis access: the page-world script gets the ECharts instance from the React fiber of the chart container. The X axis is a category axis of ascending, unevenly spaced price labels, so a price is mapped to a fractional label index and then to pixels with the chart's own `convertToPixel`. The page-world script polls each watched chart's axis geometry every 300 ms and the overlay redraws when it changes (zoom, resize, chart rebuilt). Why not chart events: the page rebuilds chart instances, which dropped the bindings and left the overlay stale; `finished` also loops because the overlay triggers redraws. If the axis cannot be read, the overlay stays empty and logs the reason.
 

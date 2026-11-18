@@ -2,10 +2,12 @@
   if (window.__impactCostHook) return
   window.__impactCostHook = true
   const source = 'impact-cost-page-hook'
+  const seen = new Map()
   function notify(input) {
     try {
       const url = new URL(typeof input === 'string' || input instanceof URL ? input : input.url, location.href)
       if (url.protocol === 'https:' && url.hostname === 'capi.coinglass.com' && ['/api/index/5/liqMap', '/api/index/2/exLiqMap'].includes(url.pathname)) {
+        seen.set(url.pathname, url.href)
         window.postMessage({ source, type: 'request', url: url.href }, location.origin)
       }
     } catch { /* Ignore invalid requests. */ }
@@ -88,6 +90,10 @@
   window.addEventListener('message', (event) => {
     if (event.source !== window || event.origin !== location.origin || event.data?.source !== 'impact-cost-content') return
     const { type, id, attribute } = event.data
+    if (type === 'ready') {
+      for (const url of seen.values()) window.postMessage({ source, type: 'request', url }, location.origin)
+      return
+    }
     const container = byAttribute(attribute)
     if (!container) return
     if (type === 'watch') {
