@@ -16,7 +16,7 @@ Status values: `Verified (date)` was confirmed on a live page, logged in unless 
 | Y axis 0 (left) is a value axis for the per-price bars. Y axis 1 (right) is a value axis for cumulative liquidation intensity in USDT; the page sets its range from its own data. | Verified (2026-11-17) |
 | The current price is the `markLine` of series 0; its `xAxis` holds the price. | Verified (2026-11-17) |
 | The chart redraws on zoom (`dataZoom` action) and on data change; chart instances can be rebuilt by the page, so event bindings on them are not reliable. | Verified (2026-11-17) |
-| Wheel zoom works on the page's own canvas; the overlay with `pointer-events: none` does not block it. | Verified (2026-11-17) |
+| The native tooltip is `trigger: axis` with a page `formatter`; it renders `.cg-toolti-box` with `.cg-toolti-title` (the X label, a price) and one `.cg-tooltip-item` per series (`.cg-tooltip-item-title`, then `.pl20` for the value, in 万/亿 units). | Verified (2026-11-17) |\n| Wheel zoom works on the page's own canvas; the overlay with `pointer-events: none` does not block it. | Verified (2026-11-17) |
 
 ## Data requests
 

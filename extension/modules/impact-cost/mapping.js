@@ -25,33 +25,31 @@ export function priceToX(price, axis) {
   return at(i) + (idx - i) * (at(i + 1) - at(i))
 }
 
-export function xToPrice(x, axis) {
-  const { firstIndex: first, lastIndex: last, indexPx, prices } = axis
-  if (!Number.isFinite(x) || last <= first) return null
-  const ascending = indexPx.at(-1) > indexPx[0]
-  const before = (a, b) => ascending ? a < b : a > b
-  let lo = 0, hi = indexPx.length - 1
-  if (before(x, indexPx[lo])) hi = 1
-  else if (before(indexPx[hi], x)) lo = hi - 1
-  else {
-    while (hi - lo > 1) {
-      const mid = (lo + hi) >> 1
-      if (before(x, indexPx[mid])) hi = mid
-      else lo = mid
-    }
-  }
-  const span = indexPx[hi] - indexPx[lo]
-  if (!span) return null
-  const index = first + lo + (x - indexPx[lo]) / span
-  if (index < 0 || index > prices.length - 1) return null
-  const i = Math.floor(index)
-  if (i === prices.length - 1) return prices[i]
-  return prices[i] + (index - i) * (prices[i + 1] - prices[i])
-}
-
 // Pixel y of a cost on the page's right Y axis (linear value axis, USDT).
 export function costToY(cost, axis) {
   return axis.yPxMin + (cost - axis.yMin) / (axis.yMax - axis.yMin) * (axis.yPxMax - axis.yPxMin)
+}
+
+// Cumulative USDT depth at a price on one side of the curves; 0 inside the spread, null beyond the deepest level.
+export function depthAt(curves, price) {
+  const up = price >= curves.mid
+  const points = up ? curves.up : curves.down
+  if (!points.length) return null
+  if (up ? price < points[0][0] : price > points[0][0]) return 0
+  if (up ? price > points.at(-1)[0] : price < points.at(-1)[0]) return null
+  let cost = 0
+  for (const [p, cum] of points) {
+    if (up ? p > price : p < price) break
+    cost = cum
+  }
+  return cost
+}
+
+// USDT amount in the page's own unit style: whole numbers below 1e4, then 万 and 亿 with two decimals.
+export function formatWan(value) {
+  if (Math.abs(value) >= 1e8) return `${(value / 1e8).toFixed(2)}亿`
+  if (Math.abs(value) >= 1e4) return `${(value / 1e4).toFixed(2)}万`
+  return String(Math.round(value))
 }
 
 // Include the interpolated boundary in both paths so line styles meet without a gap.

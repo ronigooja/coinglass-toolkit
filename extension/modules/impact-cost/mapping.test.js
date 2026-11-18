@@ -1,6 +1,27 @@
 import { test } from 'node:test'
 import { strict as assert } from 'node:assert'
-import { priceToIndex, priceToX, xToPrice, costToY, splitCurve } from './mapping.js'
+import { priceToIndex, priceToX, costToY, splitCurve, depthAt, formatWan } from './mapping.js'
+
+test('formatWan uses 万 and 亿 like the page', () => {
+  assert.equal(formatWan(0), '0')
+  assert.equal(formatWan(9999.4), '9999')
+  assert.equal(formatWan(10000), '1.00万')
+  assert.equal(formatWan(3322800), '332.28万')
+  assert.equal(formatWan(1.025e9), '10.25亿')
+})
+
+test('depthAt reads each side of the curves', () => {
+  const curves = { mid: 100, up: [[101, 10], [102, 30], [105, 80]], down: [[99, 5], [98, 25]] }
+  assert.equal(depthAt(curves, 100), 0)
+  assert.equal(depthAt(curves, 100.5), 0)
+  assert.equal(depthAt(curves, 101), 10)
+  assert.equal(depthAt(curves, 103), 30)
+  assert.equal(depthAt(curves, 105), 80)
+  assert.equal(depthAt(curves, 106), null)
+  assert.equal(depthAt(curves, 99.5), 0)
+  assert.equal(depthAt(curves, 98), 25)
+  assert.equal(depthAt(curves, 97), null)
+})
 
 // Uneven labels: indexes 0..4 at pixels 0, 10, 20, 30, 40.
 const axis = { prices: [100, 110, 130, 131, 200], firstIndex: 0, lastIndex: 4, indexPx: [0, 10, 20, 30, 40], plotTop: 20, plotBottom: 120 }
@@ -34,25 +55,6 @@ test('priceToX extrapolates outside the zoomed window', () => {
   assert.equal(priceToX(100, zoomed), -100)
   assert.equal(priceToX(140, zoomed), 300)
   assert.equal(priceToX(115, zoomed), 50)
-})
-
-test('xToPrice inverts uneven category labels and pixel positions', () => {
-  const uneven = { ...axis, indexPx: [0, 10, 30, 40, 60] }
-  for (const price of [100, 105, 120, 130.5, 200]) {
-    assert.ok(Math.abs(xToPrice(priceToX(price, uneven), uneven) - price) < 1e-9)
-  }
-  assert.equal(xToPrice(-1, uneven), null)
-  assert.equal(xToPrice(61, uneven), null)
-  assert.equal(xToPrice(NaN, uneven), null)
-})
-
-test('xToPrice handles zoom extrapolation, repeated prices and reversed pixels', () => {
-  const zoomed = { prices: [100, 110, 110, 130, 140], firstIndex: 1, lastIndex: 3, indexPx: [200, 100, 0] }
-  assert.equal(xToPrice(300, zoomed), 100)
-  assert.equal(xToPrice(150, zoomed), 110)
-  assert.equal(xToPrice(50, zoomed), 120)
-  assert.equal(xToPrice(-100, zoomed), 140)
-  assert.equal(xToPrice(-101, zoomed), null)
 })
 
 test('costToY follows the page right Y axis', () => {
