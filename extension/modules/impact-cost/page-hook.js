@@ -33,6 +33,33 @@
     return null
   }
 
+  // Rows for the page's native tooltip, per chart, sent by the content script. The page's tooltip `formatter`
+  // returns an HTML string that ECharts measures to place the box, so the row is added inside that string
+  // (adding it to the DOM afterwards left the box mispositioned).
+  const rows = new Map()
+  const wrapFormatter = (original, attribute) => {
+    const wrapped = function (params, ...rest) {
+      let html = original.call(this, params, ...rest)
+      try {
+        const first = Array.isArray(params) ? params[0] : params
+        const row = rows.get(attribute)?.[String(Number(first?.axisValue ?? first?.name))]
+        if (row && typeof html === 'string' && html.endsWith('</div></div>')) {
+          const marker = `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:${row[1]};"></span>`
+          html = `${html.slice(0, -12)}<div class='cg-tooltip-item'><div class='cg-tooltip-item-title'>${marker}订单簿累计深度</div><div class='pl20'>${row[0]}</div></div></div></div>`
+        }
+      } catch { /* Leave the native tooltip unchanged. */ }
+      return html
+    }
+    wrapped.__impactCost = true
+    return wrapped
+  }
+  // The page can replace the chart option, so the wrapper is re-applied by the poll below.
+  function ensureFormatter(container, attribute) {
+    const chart = findChart(container)
+    const formatter = chart?.getOption?.()?.tooltip?.[0]?.formatter
+    if (typeof formatter === 'function' && !formatter.__impactCost) chart.setOption({ tooltip: { formatter: wrapFormatter(formatter, attribute) } })
+  }
+
   // The X axis is a category axis whose labels are prices with uneven spacing. A price is mapped
   // to a fractional category index by interpolating between neighbouring labels, then to pixels
   // with the chart's own conversion.
@@ -76,6 +103,9 @@
       let sig = 'missing'
       if (container) {
         try {
+          ensureFormatter(container, attribute)
+        } catch { /* Tooltip row is optional. */ }
+        try {
           const a = readAxis(container).axis
           sig = a ? JSON.stringify([a.firstIndex, a.lastIndex, a.indexPx[0], a.indexPx.at(-1), a.yMin, a.yMax, a.yPxMin, a.yPxMax, a.plotLeft, a.plotRight, a.plotTop, a.plotBottom]) : 'none'
         } catch { sig = 'error' }
@@ -96,6 +126,10 @@
     }
     const container = byAttribute(attribute)
     if (!container) return
+    if (type === 'rows') {
+      rows.set(attribute, event.data.rows ?? {})
+      return
+    }
     if (type === 'watch') {
       watched.add(attribute)
       return

@@ -1,6 +1,6 @@
 import { impactCurves } from '../../shared/impact.js'
 import { parseRequest, emptyBooksNotice } from './requests.js'
-import { priceToX, costToY, splitCurve, depthAt, formatWan } from './mapping.js'
+import { priceToX, costToY, splitCurve, depthRows } from './mapping.js'
 
 const source = 'impact-cost-page-hook'
 let axisSequence = 0
@@ -14,52 +14,6 @@ function gridPoint(rect, grid) {
     x: rect.left + (rect.right - rect.left) * grid.x / grid.cols,
     y: rect.bottom - (rect.bottom - rect.top) * grid.y / grid.rows,
   }
-}
-
-// The page's own tooltip (`.cg-toolti-box`, one `.cg-tooltip-item` per series) is re-rendered on every move.
-// After each render a row with the order-book depth at the tooltip's price is appended; if the page markup
-// changes, no row is added and nothing else is affected.
-const ROW = 'data-impact-cost-row'
-
-function addDepthRow(box, curves) {
-  const price = Number(box.querySelector('.cg-toolti-title')?.textContent)
-  const existing = box.querySelector(`[${ROW}]`)
-  // The page can update a tooltip in place, so a row from an earlier price must be replaced.
-  if (existing?.getAttribute(ROW) === String(price)) return
-  existing?.remove()
-  const items = box.querySelector('.cg-tooltip-item')?.parentElement
-  if (!curves || !Number.isFinite(price) || !items) return
-  const depth = depthAt(curves, price)
-  if (depth === null) return
-  const distance = (price / curves.mid - 1) * 100
-  const row = document.createElement('div')
-  row.className = 'cg-tooltip-item'
-  row.setAttribute(ROW, String(price))
-  const title = document.createElement('div')
-  title.className = 'cg-tooltip-item-title'
-  title.textContent = '订单簿累计深度'
-  const value = document.createElement('div')
-  value.className = 'pl20'
-  value.textContent = `${formatWan(depth)} USDT (${Math.abs(distance) < 0.005 ? '0.00' : (distance > 0 ? '+' : '') + distance.toFixed(2)}%)`
-  row.append(title, value)
-  items.appendChild(row)
-}
-
-function watchTooltip(container, data) {
-  const observer = new MutationObserver(() => {
-    for (const box of container.querySelectorAll('.cg-toolti-box')) addDepthRow(box, data.curves)
-  })
-  observer.observe(container, { childList: true, subtree: true, characterData: true })
-}
-
-const watchers = new WeakMap()
-function watched(container) {
-  if (!watchers.has(container)) {
-    const data = { curves: null }
-    watchers.set(container, data)
-    watchTooltip(container, data)
-  }
-  return watchers.get(container)
 }
 
 // The page-world hook reads only documented ECharts options when available.
@@ -161,15 +115,16 @@ async function draw(state, generation) {
   const container = findChart(state.kind)
   if (!container) return
   const canvas = overlay(container)
-  const hoverData = watched(container)
-  hoverData.curves = null
+  const attribute = container.getAttribute('_echarts_instance_')
+  const sendRows = (rows) => window.postMessage({ source: 'impact-cost-content', type: 'rows', attribute, rows }, location.origin)
+  sendRows({})
   const ratio = window.devicePixelRatio || 1
   canvas.width = Math.round(container.clientWidth * ratio)
   canvas.height = Math.round(container.clientHeight * ratio)
   const ctx = canvas.getContext('2d')
   ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
   ctx.clearRect(0, 0, container.clientWidth, container.clientHeight)
-  window.postMessage({ source: 'impact-cost-content', type: 'watch', attribute: container.getAttribute('_echarts_instance_') }, location.origin)
+  window.postMessage({ source: 'impact-cost-content', type: 'watch', attribute }, location.origin)
   // A notice replaces the curves; a long period only adds a note and the curves are still drawn.
   const text = state.notice ?? (state.longPeriod ? `当前订单簿，非${state.longPeriod}累计` : null)
   const curves = state.notice ? null : impactCurves(state.books)
@@ -210,7 +165,7 @@ async function draw(state, generation) {
   }
   ctx.restore()
   drawLegend(ctx, axis, sides, state.kind === 'exchange')
-  hoverData.curves = curves
+  sendRows(depthRows(curves, axis.prices, { up: sides[0].color, down: sides[1].color }))
 }
 
 // On first load the chart can render after the order books arrive; wait for it, at most 20 s.

@@ -52,6 +52,17 @@ export function formatWan(value) {
   return String(Math.round(value))
 }
 
+// Tooltip rows keyed by the X label (as String(Number(label))): [formatted depth, curve color of that side].
+// Labels beyond the deepest level are left out.
+export function depthRows(curves, prices, colors) {
+  const rows = {}
+  for (const price of prices) {
+    const depth = depthAt(curves, price)
+    if (depth !== null) rows[String(price)] = [formatWan(depth), price >= curves.mid ? colors.up : colors.down]
+  }
+  return rows
+}
+
 // Include the interpolated boundary in both paths so line styles meet without a gap.
 export function splitCurve(points, bound, side) {
   const solid = [], dashed = []

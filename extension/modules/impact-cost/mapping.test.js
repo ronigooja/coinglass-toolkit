@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import { strict as assert } from 'node:assert'
-import { priceToIndex, priceToX, costToY, splitCurve, depthAt, formatWan } from './mapping.js'
+import { priceToIndex, priceToX, costToY, splitCurve, depthAt, formatWan, depthRows } from './mapping.js'
 
 test('formatWan uses 万 and 亿 like the page', () => {
   assert.equal(formatWan(0), '0')
@@ -8,6 +8,12 @@ test('formatWan uses 万 and 亿 like the page', () => {
   assert.equal(formatWan(10000), '1.00万')
   assert.equal(formatWan(3322800), '332.28万')
   assert.equal(formatWan(1.025e9), '10.25亿')
+})
+
+test('depthRows keys rows by label and colors them by side', () => {
+  const curves = { mid: 100, up: [[101, 10], [102, 30000]], down: [[99, 5], [98, 25]] }
+  const rows = depthRows(curves, [97, 98, 99, 100.5, 101, 102, 103], { up: 'U', down: 'D' })
+  assert.deepEqual(rows, { 98: ['25', 'D'], 99: ['5', 'D'], 100.5: ['0', 'U'], 101: ['10', 'U'], 102: ['3.00万', 'U'] })
 })
 
 test('depthAt reads each side of the curves', () => {
