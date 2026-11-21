@@ -1,4 +1,4 @@
-// Helpers injected into the CoinGlass page by scripts/safari/page.sh. Page facts: docs/coinglass-page.md.
+// Helpers injected into the CoinGlass page by scripts/safari/page.sh (through safari-cli). Page facts: docs/coinglass-page.md.
 // Chart index 0 is the single-exchange chart, 1 is the aggregate chart.
 window.__ctk = (() => {
   const containers = () => [...document.querySelectorAll('[_echarts_instance_]')]
@@ -117,7 +117,7 @@ window.__ctk = (() => {
     o.click()
   }
 
-  // Chart section titles, in page order. Escapes instead of literals: page.sh passes code through osascript, which can garble non-ASCII text.
+  // Chart section titles, in page order. Written with \u escapes so the pattern does not depend on the file encoding.
   const headings = () => [...document.querySelectorAll('h1,h2,h3,h4,h5,h6')].map((h) => h.textContent.trim()).filter((t) => /\u6e05\u7b97\u5730\u56fe$/.test(t))
 
   return { chart, axes, overlayStats, zoomToCurrent, clickRefresh, typeInInput, pickOption, pickPeriod, headings }

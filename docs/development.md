@@ -17,11 +17,9 @@ CI also runs a Safari packaging job after the test job.
 Page behavior cannot be tested offline. Record confirmed page facts in [coinglass-page.md](coinglass-page.md).
 
 1. Install the built extension: `SIGN_IDENTITY=<identity> scripts/safari/install.sh`. List identities with `security find-identity -v -p codesigning`. Settings and what it does: header of [install.sh](../scripts/safari/install.sh). Enable the extension in Safari > Settings > Extensions on first install.
-2. Log in to CoinGlass in Safari, then drive and inspect the page with [page.sh](../scripts/safari/page.sh). It needs Safari > Settings > Developer > "Allow JavaScript from Apple Events"; turn it off afterwards. Chart helpers (`axes`, `overlayStats`, `zoomToCurrent`, `pickPeriod`, ...) are in [chart.js](../scripts/safari/lib/chart.js).
+2. Log in to CoinGlass in Safari, then drive and inspect the page with [page.sh](../scripts/safari/page.sh), a thin wrapper over [safari-cli](https://github.com/ronigooja/safari-cli) (install it onto `PATH`; setup, the required Safari setting and its security note are in its README). `page.sh` adds the CoinGlass URL and injects the chart helpers (`axes`, `overlayStats`, `zoomToCurrent`, `pickPeriod`, ...) from [chart.js](../scripts/safari/lib/chart.js).
 
 Example: `scripts/safari/page.sh open`, then `scripts/safari/page.sh eval '__ctk.overlayStats(0)'`.
-
-Non-ASCII text in injected code is garbled by osascript. Write Chinese strings as `\uXXXX` escapes in JavaScript passed to `page.sh`.
 
 ## Add a module
 

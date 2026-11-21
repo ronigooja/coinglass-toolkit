@@ -1,44 +1,38 @@
 #!/bin/bash
-# Run JavaScript in the front Safari tab and print the result.
+# CoinGlass page driver on top of safari-cli (https://github.com/ronigooja/safari-cli).
 #
-#   page.sh open                      open the LiquidationMap page and wait for it
+#   page.sh open                      open the LiquidationMap page and wait for the charts
 #   page.sh eval '<js expression>'    run an expression; helpers are available as window.__ctk
 #   page.sh file <path.js>            run a file containing one expression
 #
-# Needs Safari > Settings > Developer > "Allow JavaScript from Apple Events". Turn it off when done.
+# Needs safari-cli on PATH and Safari > Settings > Developer > "Allow JavaScript from Apple Events" on.
 # Helpers: lib/chart.js. Selectors and facts: docs/coinglass-page.md.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 URL="${CTK_URL:-https://www.coinglass.com/zh/pro/futures/LiquidationMap}"
-
-run_js() {
-  # The code goes through a file and a variable, so quotes and backslashes need no shell escaping.
-  local code="$1"
-  CTK_CODE="$code" osascript -e 'tell application "Safari" to do JavaScript (system attribute "CTK_CODE") in document 1'
-}
+TAB="coinglass.com/zh/pro/futures/LiquidationMap"
+command -v safari-cli >/dev/null || { echo "page.sh: safari-cli not found on PATH" >&2; exit 1; }
 
 inject() {
-  run_js "$(cat "$HERE/lib/chart.js")" >/dev/null
+  safari-cli file --tab "$TAB" "$HERE/lib/chart.js" >/dev/null
 }
 
 case "${1:-}" in
   open)
-    osascript -e "tell application \"Safari\" to activate" \
-      -e "tell application \"Safari\" to if (count of windows) = 0 then make new document" \
-      -e "tell application \"Safari\" to set URL of document 1 to \"$URL\""
-    sleep "${CTK_WAIT:-12}"
+    safari-cli open "$URL" >/dev/null
+    safari-cli wait --tab "$TAB" --timeout "${CTK_WAIT:-30}" "document.querySelectorAll('[_echarts_instance_]').length >= 2"
     ;;
   eval)
     inject
-    run_js "(function(){ try { var r = ($2); return typeof r === 'string' ? r : JSON.stringify(r) } catch (e) { return 'ERR ' + e.message } })()"
+    safari-cli eval --tab "$TAB" "$2"
     ;;
   file)
     inject
-    run_js "(function(){ try { var r = ($(cat "$2")); return typeof r === 'string' ? r : JSON.stringify(r) } catch (e) { return 'ERR ' + e.message } })()"
+    safari-cli file --tab "$TAB" "$2"
     ;;
   *)
-    sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//'
     exit 2
     ;;
 esac
